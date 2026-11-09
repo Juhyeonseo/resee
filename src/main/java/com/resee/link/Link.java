@@ -61,6 +61,22 @@ public class Link {
         this.createdAt = LocalDateTime.now();
     }
 
+    /** R4 '확인 완료' */
+    public void check() {
+        this.status = LinkStatus.CHECKED;
+    }
+
+    /** R4 '다시 보기': 미확인으로 두고 다시 볼 날짜만 바꾼다 */
+    public void reviewAgain(LocalDate newDueDate) {
+        this.status = LinkStatus.UNCHECKED;
+        this.dueDate = newDueDate;
+    }
+
+    /** R1-2 메모 직접 입력·수정 */
+    public void updateMemo(String memo) {
+        this.memo = memo;
+    }
+
     public Long getId() { return id; }
     public String getUrl() { return url; }
     public String getSummary() { return summary; }
