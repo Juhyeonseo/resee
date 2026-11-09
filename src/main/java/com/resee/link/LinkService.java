@@ -8,8 +8,9 @@ import java.net.URISyntaxException;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.List;
+import java.util.Optional;
 
-/** 링크 기능: 입력 검사, URL 보정, 다시보기 대상 선별 같은 규칙은 모두 여기서 판단한다 */
+/** 링크 기능: 입력 검사, URL 보정, 저장 내용 결정, 다시보기 대상 선별 같은 규칙은 모두 여기서 판단한다 */
 @Service
 public class LinkService {
 
@@ -18,14 +19,20 @@ public class LinkService {
     private static final int URL_MAX = 2048;
 
     private final LinkRepository linkRepository;
+    private final SummaryClient summaryClient;
 
-    public LinkService(LinkRepository linkRepository) {
+    public LinkService(LinkRepository linkRepository, SummaryClient summaryClient) {
         this.linkRepository = linkRepository;
+        this.summaryClient = summaryClient;
     }
 
-    /** R1, R2: 링크 저장. 검사를 통과하지 못하면 아무것도 저장하지 않는다 */
-    @Transactional
-    public Link create(LinkCreateRequest request) {
+    /**
+     * R1, R2, R1-2: 링크 저장.
+     * 검사를 통과하지 못하면 외부 API도 DB도 부르지 않는다.
+     * 핵심 정리에 실패해도 링크는 저장한다.
+     * (외부 API를 기다리는 동안 DB 연결을 붙잡지 않도록 이 메서드에는 @Transactional 을 붙이지 않는다)
+     */
+    public LinkSaveResult create(LinkCreateRequest request) {
         String url = normalizeUrl(request.url());
 
         LocalDate dueDate = request.dueDate();
@@ -46,8 +53,9 @@ public class LinkService {
             }
         }
 
-        // 핵심 정리(summary)는 2차 반복(작업 5)에서 연결한다. 지금은 비워 두고 저장한다
-        return linkRepository.save(new Link(url, null, memo, dueDate));
+        Optional<String> summary = summaryClient.summarize(url);
+        Link saved = linkRepository.save(new Link(url, summary.orElse(null), memo, dueDate));
+        return new LinkSaveResult(saved, summary.isEmpty());
     }
 
     /** R3: 오늘의 다시보기. 미확인이고 다시 볼 날짜가 오늘이거나 지난 링크. 읽기만 한다 */

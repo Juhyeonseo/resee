@@ -21,11 +21,12 @@ public class LinkController {
         this.linkService = linkService;
     }
 
-    /** POST /links : 링크 저장 (R1, R2) */
+    /** POST /links : 링크 저장 (R1, R1-2, R2) */
     @PostMapping
     public ResponseEntity<LinkResponse> create(@RequestBody LinkCreateRequest request) {
-        Link saved = linkService.create(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(LinkResponse.from(saved));
+        LinkSaveResult result = linkService.create(request);
+        String notice = result.summaryFailed() ? LinkResponse.SUMMARY_FAILED_NOTICE : null;
+        return ResponseEntity.status(HttpStatus.CREATED).body(LinkResponse.from(result.link(), notice));
     }
 
     /** GET /links/today : 오늘의 다시보기 (R3) */
