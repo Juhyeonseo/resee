@@ -1,0 +1,15 @@
+spring:
+  datasource:
+    # 값은 docker-compose.yml 이 환경변수로 넣어 준다
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/resee}
+    username: ${DB_USER:resee}
+    password: ${DB_PASSWORD:resee}
+  jpa:
+    hibernate:
+      # 엔티티(Link)를 보고 links 테이블을 자동으로 만든다
+      ddl-auto: update
+    open-in-view: false
+
+gemini:
+  api-key: ${GEMINI_API_KEY:}
+  model: gemini-3.5-flash-lite
