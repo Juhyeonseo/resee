@@ -1,5 +1,5 @@
-﻿# 다시봄(Re:See) 작업 6 확인 스크립트: 상태 변경, 메모 수정, 보관함
-# 사용법 (resee 폴더에서): powershell -ExecutionPolicy Bypass -File .\test-step6.ps1
+﻿# 다시봄(Re:See) 시험 3: 상태 변경, 메모 수정, 보관함
+# 사용법 (resee 폴더에서): powershell -ExecutionPolicy Bypass -File .\tests\test-status.ps1
 # 주의: 시험을 위해 links 테이블의 기존 데이터를 지우고 시험용 링크를 넣는다. (외부 API는 부르지 않음)
 
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8

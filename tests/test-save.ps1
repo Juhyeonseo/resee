@@ -1,7 +1,7 @@
-﻿# 다시봄(Re:See) 2~4단계 확인 스크립트
+﻿# 다시봄(Re:See) 시험 1: 링크 저장 입력 검사, 오늘의 다시보기, 재시작 후 기록 유지
 # 사용법 (resee 폴더에서):
-#   powershell -ExecutionPolicy Bypass -File .\test-step2.ps1            -> 2~3단계 AC 확인
-#   powershell -ExecutionPolicy Bypass -File .\test-step2.ps1 -Restart   -> 위 확인 + 4단계(재실행 후 보존) 확인
+#   powershell -ExecutionPolicy Bypass -File .\tests\test-save.ps1            -> 2~3단계 AC 확인
+#   powershell -ExecutionPolicy Bypass -File .\tests\test-save.ps1 -Restart   -> 위 확인 + 4단계(재실행 후 보존) 확인
 # 주의: 시험을 위해 links 테이블의 기존 데이터를 모두 지우고 시작한다.
 param([switch]$Restart)
 
@@ -63,7 +63,7 @@ Sql "TRUNCATE links RESTART IDENTITY;" | Out-Null
 Write-Host ""
 Write-Host "=== R3. 오늘의 다시보기 ===" -ForegroundColor Cyan
 $list = GetToday
-Check "AC3-2" "날짜가 된 미확인 링크가 없으면 빈 목록" ($list.Count -eq 0) ("결과 " + $list.Count + "건")
+Check "추가" "날짜가 된 미확인 링크가 없으면 빈 목록" ($list.Count -eq 0) ("결과 " + $list.Count + "건")
 
 Sql ("INSERT INTO links (url, memo, due_date, status, created_at) VALUES " +
      "('https://example.com/A', 'A', '" + (D -1) + "', 'UNCHECKED', now())," +
@@ -72,7 +72,7 @@ Sql ("INSERT INTO links (url, memo, due_date, status, created_at) VALUES " +
      "('https://example.com/D', 'D', '" + (D 0) + "', 'CHECKED', now());") | Out-Null
 $list = GetToday
 $memos = ($list | ForEach-Object { $_.memo }) -join ","
-Check "AC3-1" "공통 시작 상태(A~D)에서 A, B 순서로만 표시(팝업 제외)" ($memos -eq "A,B") ("결과: " + $memos)
+Check "AC3-1" "공통 시작 상태(A~D)에서 A, B 순서로만 표시" ($memos -eq "A,B") ("결과: " + $memos)
 $checked = [int](Sql "SELECT COUNT(*) FROM links WHERE status='CHECKED';")
 Check "AC3-1" "조회 후에도 상태는 그대로" ($checked -eq 1) ("확인 완료 " + $checked + "건")
 
@@ -86,10 +86,10 @@ Sql ("INSERT INTO links (url, due_date, status, created_at) VALUES " +
 
 $r = PostLink @{ url = "https://sprint.codeit.kr/track/backend-spring"; dueDate = (D 3); memo = "백엔드 과정 부트캠프" }
 $ok = ($r.Code -eq 201) -and ($r.Body.status -eq "UNCHECKED") -and ($r.Body.dueDate -eq (D 3)) -and ($r.Body.memo -eq "백엔드 과정 부트캠프") -and ((LinkCount) -eq 3)
-Check "AC1-1" "정상 저장: 3건, 미확인, 날짜·메모 일치 (핵심 정리는 작업 5에서)" $ok ("응답 " + $r.Code)
+Check "추가" "정상 저장: 3건, 미확인, 날짜·메모 일치" $ok ("응답 " + $r.Code)
 
 $r = PostLink @{ url = "naver.com"; dueDate = (D 3) }
-Check "AC1-2" "naver.com 입력 시 https:// 를 붙여 저장" (($r.Code -eq 201) -and ($r.Body.url -eq "https://naver.com")) ("저장된 URL: " + $r.Body.url)
+Check "추가" "naver.com 입력 시 https:// 를 붙여 저장" (($r.Code -eq 201) -and ($r.Body.url -eq "https://naver.com")) ("저장된 URL: " + $r.Body.url)
 
 $before = LinkCount
 $r = PostLink @{ url = "부트캠프 공고"; dueDate = (D 3) }
@@ -99,14 +99,14 @@ $r = PostLink @{ url = ""; dueDate = (D 3) }
 Check "AC1-3" "빈 URL 거절, 건수 그대로" (($r.Code -eq 400) -and ((LinkCount) -eq $before)) ("응답 " + $r.Code + " " + $r.Body)
 
 $r = PostLink @{ url = "https://example.com/memo"; dueDate = (D 3); memo = ("가" * 201) }
-Check "AC1-4" "메모 201자 거절, 건수 그대로" (($r.Code -eq 400) -and ((LinkCount) -eq $before)) ("응답 " + $r.Code + " " + $r.Body)
+Check "추가" "메모 201자 거절, 건수 그대로" (($r.Code -eq 400) -and ((LinkCount) -eq $before)) ("응답 " + $r.Code + " " + $r.Body)
 
 $r = PostLink @{ url = "https://example.com/past"; dueDate = (D -1) }
 Check "AC2-3" "어제 날짜 거절, 건수 그대로" (($r.Code -eq 400) -and ((LinkCount) -eq $before)) ("응답 " + $r.Code + " " + $r.Body)
 
 $r = PostLink @{ url = "https://example.com/today"; dueDate = (D 0) }
 $inToday = @(GetToday | Where-Object { $_.url -eq "https://example.com/today" }).Count -eq 1
-Check "AC2-2" "오늘 날짜로 저장하면 바로 오늘의 다시보기에 표시" (($r.Code -eq 201) -and $inToday) ("응답 " + $r.Code)
+Check "추가" "오늘 날짜로 저장하면 바로 오늘의 다시보기에 표시" (($r.Code -eq 201) -and $inToday) ("응답 " + $r.Code)
 
 # ---------- 4단계: 재실행 후 보존 ----------
 if ($Restart) {

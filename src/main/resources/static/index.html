@@ -4,195 +4,197 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>다시봄 Re:See</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800&display=swap" rel="stylesheet">
 <style>
+  /* ===== 색 ===== */
   :root {
-    --bg: #F6F3FF; --card: #FFFFFF; --soft: #EFEBFF; --ink: #231F33; --muted: #5E5873; --faint: #9A94AD;
+    --bg: #F6F3FF; --card: #FFFFFF; --soft: #EFEBFF; --ink: #231F33; --muted: #5E5873;
     --line: #DCD5F2; --accent: #6D4FD8; --accent-ink: #4A35A8;
-    --green-soft: #E4F6EC; --green-ink: #1F6B40;
-    --warn: #8A5300; --warn-soft: #FFF1D6; --danger: #B3261E; --danger-soft: #FCE8E6;
+    --green-soft: #E4F6EC; --green-ink: #1F6B40; --warn-soft: #FFF1D6; --warn: #8A5300;
+    --danger-soft: #FCE8E6; --danger: #B3261E;
   }
+
+  /* ===== 기본 ===== */
   * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
   body { margin: 0; background: var(--bg); color: var(--ink); font-family: "Noto Sans KR", "Malgun Gothic", sans-serif; line-height: 1.55; }
   button { font: inherit; cursor: pointer; }
+  input, textarea, select { font: inherit; font-size: 14px; color: var(--ink); background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 11px 14px; }
+  textarea { width: 100%; resize: vertical; min-height: 64px; }
+  input:focus, textarea:focus, select:focus, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
   .wrap { max-width: 1180px; margin: 0 auto; padding: 32px 24px 60px; display: flex; flex-direction: column; gap: 24px; }
+  .box { background: var(--card); border-radius: 24px; padding: 20px 24px; }
 
-  /* 헤더 */
+  /* ===== 버튼 ===== */
+  .btn { font-size: 14px; padding: 9px 16px; border-radius: 12px; border: 1px solid var(--line); background: #fff; color: var(--ink); }
+  .btn.main { border-color: var(--accent); background: var(--accent); color: #fff; font-weight: 700; }
+  .btn.text { border: none; background: none; color: var(--muted); padding: 9px 6px; }
+  .btn:disabled { opacity: .7; cursor: wait; }
+  .chip { font-size: 13px; padding: 9px 10px; border-radius: 12px; border: 1px solid var(--line); background: #fff; color: var(--ink); }
+  .chip.on { border: 1.5px solid var(--accent); background: var(--soft); color: var(--accent-ink); font-weight: 700; }
+
+  /* ===== 헤더 ===== */
   header { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
   .brand { display: flex; align-items: center; gap: 10px; }
   .brand h1 { margin: 0; font-size: 22px; font-weight: 800; }
   .brand p { margin: 0 0 0 4px; font-size: 13px; color: var(--muted); }
-  .view-btn { border: 1px solid var(--line); background: var(--card); color: var(--accent-ink); border-radius: 999px; padding: 9px 16px; font-size: 14px; font-weight: 500; }
-  .view-btn.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+  #viewBtn { border-radius: 999px; color: var(--accent-ink); font-weight: 500; }
+  #viewBtn.on { background: var(--accent); border-color: var(--accent); color: #fff; }
 
-  /* 주간 띠 */
-  .week { background: var(--card); border-radius: 24px; padding: 14px 16px 18px; }
+  /* ===== 주간 달력 ===== */
   .week-top { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
-  .week-top .range { font-size: 15px; font-weight: 700; margin-right: auto; }
-  .arrow { width: 38px; height: 38px; border-radius: 12px; border: 1px solid var(--line); background: #fff; color: var(--ink); display: flex; align-items: center; justify-content: center; padding: 0; }
-  .arrow:hover, .today-btn:hover { border-color: var(--accent); }
-  .today-btn { height: 38px; border-radius: 12px; border: 1px solid var(--line); background: #fff; color: var(--ink); padding: 0 14px; font-size: 13px; }
+  #range { font-weight: 700; margin-right: auto; }
+  .arrow { width: 38px; height: 38px; padding: 0; }
   .days { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px; }
-  .day { border: 1px solid transparent; background: #fff; color: var(--muted); border-radius: 16px; padding: 10px 0; display: flex; flex-direction: column; align-items: center; gap: 1px; }
-  .day .dow { font-size: 13px; }
-  .day .num { font-size: 22px; font-weight: 800; color: var(--ink); }
-  .day .cnt { font-size: 12px; font-weight: 500; min-height: 18px; }
+  .day { border: 1px solid transparent; background: #fff; color: var(--muted); border-radius: 16px; padding: 10px 0; display: flex; flex-direction: column; align-items: center; }
+  .day b { font-size: 22px; color: var(--ink); }
+  .day small { font-size: 12px; min-height: 18px; }
   .day.has { background: var(--bg); border-color: var(--line); }
-  .day.has .cnt { color: var(--accent-ink); font-weight: 700; }
+  .day.has small { color: var(--accent-ink); font-weight: 700; }
   .day.past { opacity: .5; }
-  .day.today .dow { color: var(--accent-ink); font-weight: 700; }
-  .day.sel { background: var(--accent); border-color: var(--accent); color: #fff; opacity: 1; }
-  .day.sel .num, .day.sel .cnt, .day.sel .dow { color: #fff; }
+  .day.today span { color: var(--accent-ink); font-weight: 700; }
+  .day.sel, .day.sel * { background: var(--accent); border-color: var(--accent); color: #fff !important; opacity: 1; }
   .day:not(.sel):hover { border-color: var(--accent); }
 
-  /* 레이아웃 */
+  /* ===== 본문: 왼쪽 목록, 오른쪽 저장 폼 ===== */
   .layout { display: flex; gap: 28px; align-items: flex-start; flex-wrap: wrap; }
-  .content { flex: 999 1 480px; min-width: 0; }
-  .side { flex: 0 0 360px; max-width: 100%; }
-
-  /* 목록 */
-  .head { display: flex; align-items: center; gap: 10px; margin: 0 0 14px; flex-wrap: wrap; }
+  main { flex: 999 1 480px; min-width: 0; }
+  aside { flex: 0 0 360px; max-width: 100%; }
+  .head { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
   .head h2 { margin: 0; font-size: 20px; font-weight: 800; }
-  .filters { margin-left: auto; display: flex; gap: 6px; flex-wrap: wrap; }
-  .filters select { font: inherit; font-size: 13px; padding: 7px 10px; border: 1px solid var(--line); border-radius: 12px; background: #fff; color: var(--ink); }
+  .head select { padding: 7px 10px; font-size: 13px; }
+  .head select:first-of-type { margin-left: auto; }
   .list { display: flex; flex-direction: column; gap: 14px; }
-  .empty { background: var(--card); border: 1.5px dashed var(--line); border-radius: 20px; padding: 28px; text-align: center; color: var(--muted); font-size: 14px; }
+  .empty { border: 1.5px dashed var(--line); border-radius: 20px; padding: 28px; text-align: center; color: var(--muted); font-size: 14px; background: var(--card); }
 
-  .card { background: var(--card); border-radius: 20px; padding: 20px 22px; display: flex; gap: 18px; }
-  .card .bar { width: 6px; border-radius: 6px; background: var(--accent); flex-shrink: 0; }
-  .card.done .bar { background: var(--line); }
-  .card .main { flex-grow: 1; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
-  .card .top { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+  /* ===== 링크 카드 ===== */
+  .card { background: var(--card); border-radius: 20px; padding: 20px 22px; display: flex; flex-direction: column; gap: 10px; border-left: 6px solid var(--accent); }
+  .card.done { border-left-color: var(--line); }
+  .card .top { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
   .card .title { margin: 0; font-size: 17px; font-weight: 700; word-break: break-all; }
   .card .meta { font-size: 13px; color: var(--muted); }
-  .state { font-size: 12px; font-weight: 700; border-radius: 8px; padding: 3px 9px; }
-  .state.todo { background: var(--soft); color: var(--accent-ink); }
-  .state.done { background: var(--green-soft); color: var(--green-ink); }
+  .badge { align-self: flex-start; font-size: 12px; font-weight: 700; border-radius: 8px; padding: 3px 9px; background: var(--soft); color: var(--accent-ink); }
+  .badge.done { background: var(--green-soft); color: var(--green-ink); }
   .summary { margin: 0; padding: 12px 16px; background: var(--bg); border-radius: 14px; list-style: none; display: flex; flex-direction: column; gap: 5px; font-size: 14px; }
   .summary b { color: var(--accent-ink); margin-right: 6px; }
   .summary.none { color: var(--muted); font-style: italic; }
   .actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-  .btn { font-size: 14px; padding: 9px 16px; border-radius: 12px; border: 1px solid var(--line); background: #fff; color: var(--ink); }
-  .btn.ok { border-color: var(--accent); background: var(--accent); color: #fff; font-weight: 700; }
-  .btn.text { border: none; background: none; color: var(--muted); padding: 9px 6px; }
   .actions a { margin-left: auto; color: var(--accent-ink); font-size: 14px; font-weight: 500; text-decoration: none; }
-  .actions a:hover { text-decoration: underline; }
   .inline { padding: 14px; border: 1.5px dashed var(--line); border-radius: 14px; display: flex; flex-direction: column; gap: 10px; }
-  .inline .row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
-  .inline input[type=date] { width: auto; }
+  .row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
   .card-err { color: var(--danger); font-size: 13px; }
 
-  /* 저장 폼 */
-  form.save { background: var(--card); border-radius: 24px; padding: 24px; display: flex; flex-direction: column; gap: 14px; }
-  form.save h2 { margin: 0; font-size: 18px; font-weight: 800; }
-  .field { display: flex; flex-direction: column; gap: 6px; }
-  .field > label, .field > .label { font-size: 13px; font-weight: 700; }
-  input[type=text], textarea, input[type=date] { font: inherit; font-size: 14px; padding: 11px 14px; border: 1px solid var(--line); border-radius: 12px; background: #fff; color: var(--ink); width: 100%; }
-  textarea { resize: vertical; min-height: 64px; }
-  input:focus, textarea:focus, select:focus, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
-  .quick { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
-  .chip { font-size: 13px; padding: 9px 10px; border-radius: 12px; border: 1px solid var(--line); background: #fff; color: var(--ink); }
-  .chip.on { border: 1.5px solid var(--accent); background: var(--soft); color: var(--accent-ink); font-weight: 700; }
-  .hint { margin: 0; font-size: 12px; color: var(--muted); }
-  .count { font-size: 12px; color: var(--muted); text-align: right; }
-  .btn-main { font-size: 15px; font-weight: 700; padding: 14px; border: none; border-radius: 14px; background: var(--accent); color: #fff; }
-  .btn-main:disabled { opacity: .7; cursor: wait; }
+  /* ===== 저장 폼 ===== */
+  form { display: flex; flex-direction: column; gap: 14px; }
+  form h2 { margin: 0; font-size: 18px; font-weight: 800; }
+  label, .label { font-size: 13px; font-weight: 700; display: block; margin-bottom: 6px; }
+  form input { width: 100%; }
+  .quick { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin-bottom: 6px; }
+  .hint { margin: 4px 0 0; font-size: 12px; color: var(--muted); }
+  .url-row { display: flex; gap: 6px; }
+  .url-row input { flex: 1; min-width: 0; }
+  .url-row .btn { white-space: nowrap; }
+  #step2 { display: flex; flex-direction: column; gap: 14px; }
   .msg { display: none; padding: 11px 13px; border-radius: 12px; font-size: 14px; white-space: pre-wrap; }
-  .msg.ok { display: block; background: var(--green-soft); color: var(--green-ink); }
   .msg.info { display: block; background: var(--bg); color: var(--muted); }
+  .msg.ok { display: block; background: var(--green-soft); color: var(--green-ink); }
   .msg.warn { display: block; background: var(--warn-soft); color: var(--warn); }
   .msg.err { display: block; background: var(--danger-soft); color: var(--danger); }
 
+  /* ===== 휴대폰 화면 ===== */
   @media (max-width: 860px) {
     .wrap { padding: 20px 16px 48px; gap: 18px; }
-    .side { flex-basis: 100%; order: -1; }
+    aside { flex-basis: 100%; order: -1; }
     .days { gap: 4px; }
-    .day { border-radius: 12px; padding: 8px 0; }
-    .day .num { font-size: 18px; }
-    .day .cnt { font-size: 11px; }
+    .day b { font-size: 18px; }
     .brand p { display: none; }
   }
 </style>
 </head>
 <body>
 <div class="wrap">
+
   <header>
     <div class="brand">
       <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#6D4FD8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.3-5.7"/><path d="M20 4v4h-4"/></svg>
       <h1>다시봄</h1>
       <p>저장한 링크, 나중에 다시 보아요</p>
     </div>
-    <button type="button" id="viewBtn" class="view-btn">보관함 전체 보기</button>
+    <button type="button" id="viewBtn" class="btn">보관함 전체 보기</button>
   </header>
 
-  <!-- 주간 띠: 화살표로 주 이동, 날짜를 누르면 그날 다시 볼 링크 -->
-  <section class="week" aria-label="주간 달력">
+  <!-- 주간 달력: 화살표로 주 이동, 날짜를 누르면 그날 다시 볼 링크 -->
+  <section class="box">
     <div class="week-top">
-      <span id="range" class="range"></span>
-      <button type="button" id="todayBtn" class="today-btn">오늘</button>
-      <button type="button" id="prevWeek" class="arrow" aria-label="지난주">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>
-      </button>
-      <button type="button" id="nextWeek" class="arrow" aria-label="다음 주">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
-      </button>
+      <span id="range"></span>
+      <button type="button" id="todayBtn" class="btn">오늘</button>
+      <button type="button" id="prevWeek" class="btn arrow" aria-label="지난주">‹</button>
+      <button type="button" id="nextWeek" class="btn arrow" aria-label="다음 주">›</button>
     </div>
     <div id="days" class="days"></div>
   </section>
 
   <div class="layout">
-    <main class="content">
-      <!-- R3 날짜별 다시보기 -->
+    <main>
+      <!-- 날짜별 다시보기 (R3) -->
       <section id="dayView">
-        <div class="head"><h2 id="dayTitle">오늘 다시 볼 링크</h2></div>
+        <div class="head"><h2 id="dayTitle"></h2></div>
         <div id="dayList" class="list"></div>
       </section>
 
-      <!-- R5 보관함 -->
+      <!-- 보관함 (R5) -->
       <section id="allView" hidden>
         <div class="head">
           <h2>보관함</h2>
-          <div class="filters">
-            <select id="statusFilter" aria-label="상태">
-              <option value="ALL">전체</option>
-              <option value="UNCHECKED">아직 안 봄</option>
-              <option value="CHECKED">확인 완료</option>
-            </select>
-            <select id="sortOrder" aria-label="정렬">
-              <option value="newest">최신순</option>
-              <option value="oldest">오래된 순</option>
-            </select>
-          </div>
+          <select id="statusFilter" aria-label="상태">
+            <option value="ALL">전체</option>
+            <option value="UNCHECKED">아직 안 봄</option>
+            <option value="CHECKED">확인 완료</option>
+          </select>
+          <select id="sortOrder" aria-label="정렬">
+            <option value="newest">최신순</option>
+            <option value="oldest">오래된 순</option>
+          </select>
         </div>
         <div id="allList" class="list"></div>
       </section>
     </main>
 
-    <!-- R1·R1-2·R2 링크 저장 -->
-    <aside class="side">
-      <form id="saveForm" class="save" autocomplete="off">
+    <!-- 링크 저장 (R1, R1-2, R2) -->
+    <aside class="box">
+      <form id="saveForm" autocomplete="off">
         <h2>링크 추가</h2>
-        <div class="field">
+
+        <!-- 1단계: URL 을 넣고 핵심 정리부터 본다 -->
+        <div>
           <label for="url">URL</label>
-          <input id="url" type="text" placeholder="https://" required>
-        </div>
-        <div class="field">
-          <label for="memo">저장 이유 <span style="font-weight:400;color:var(--muted)">(선택)</span></label>
-          <textarea id="memo" maxlength="200" placeholder="예: 백엔드 과정 부트캠프"></textarea>
-          <div class="count"><span id="memoCount">0</span>/200</div>
-        </div>
-        <div class="field">
-          <span class="label">다시 볼 날</span>
-          <div class="quick">
-            <button type="button" class="chip" data-days="1">내일</button>
-            <button type="button" class="chip" data-days="3">3일 후</button>
-            <button type="button" class="chip" data-days="7">7일 후</button>
+          <div class="url-row">
+            <input id="url" type="text" placeholder="https://" required>
+            <button id="previewBtn" class="btn main" type="submit">핵심 정리 보기</button>
           </div>
-          <input id="dueDate" type="date" required aria-label="다시 볼 날짜">
-          <p class="hint">위 달력에서 날짜를 눌러도 정할 수 있어요</p>
         </div>
-        <button id="saveBtn" class="btn-main" type="submit">저장</button>
+        <div id="previewMsg" class="msg"></div>
+
+        <!-- 2단계: 정리를 보고 메모와 날짜를 정해 저장한다 (1단계가 끝나야 보인다) -->
+        <div id="step2" hidden>
+          <div id="previewBox"></div>
+          <div>
+            <label for="memo">저장 이유 <span style="font-weight:400;color:var(--muted)">(선택)</span></label>
+            <textarea id="memo" maxlength="200" placeholder="예: 백엔드 과정 부트캠프"></textarea>
+            <div class="hint" style="text-align:right"><span id="memoCount">0</span>/200</div>
+          </div>
+          <div>
+            <span class="label">다시 볼 날</span>
+            <div class="quick">
+              <button type="button" class="chip" data-days="1">내일</button>
+              <button type="button" class="chip" data-days="3">3일 후</button>
+              <button type="button" class="chip" data-days="7">7일 후</button>
+            </div>
+            <input id="dueDate" type="date" aria-label="다시 볼 날짜">
+            <p class="hint">위 달력에서 날짜를 눌러도 정할 수 있어요</p>
+          </div>
+          <button id="saveBtn" class="btn main" type="button">저장</button>
+        </div>
         <div id="saveMsg" class="msg"></div>
       </form>
     </aside>
@@ -200,316 +202,344 @@
 </div>
 
 <script>
-  // ---------- 공통 ----------
-  async function api(method, path, body) {
-    const opts = { method, headers: {} };
-    if (body !== undefined) {
-      opts.headers["Content-Type"] = "application/json";
-      opts.body = JSON.stringify(body);
-    }
-    try {
-      const res = await fetch(path, opts);
-      const text = await res.text();
-      return { ok: res.ok, status: res.status, data: text ? JSON.parse(text) : null };
-    } catch (e) {
-      return { ok: false, status: 0, data: { error: "서버에 연결할 수 없습니다." } };
-    }
-  }
+// ============================================================
+// 1. 도우미: 날짜 계산, 글자 처리
+// ============================================================
+const DOW = ["일", "월", "화", "수", "목", "금", "토"];
+const $ = (id) => document.getElementById(id);
 
-  function esc(s) {
-    return String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-  }
+// Date → "2026-11-13"
+function iso(d) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+function addDays(d, n) { const x = new Date(d); x.setDate(x.getDate() + n); return x; }
+function dateAfter(n) { return iso(addDays(new Date(), n)); }        // 오늘부터 n일 뒤
+function mondayOf(d) { return addDays(new Date(d.getFullYear(), d.getMonth(), d.getDate()), -((d.getDay() + 6) % 7)); }
+function koDate(s) { const [, m, d] = s.slice(0, 10).split("-"); return `${+m}월 ${+d}일`; }   // "11월 13일"
+function hostOf(url) { try { return new URL(url).hostname.replace(/^www\./, ""); } catch { return url; } }
 
-  const DOW = ["일", "월", "화", "수", "목", "금", "토"];
-  const pad = n => String(n).padStart(2, "0");
-  const iso = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-  function addDays(d, n) { const x = new Date(d); x.setDate(x.getDate() + n); return x; }
-  function fromIso(s) { const [y, m, d] = s.split("-").map(Number); return new Date(y, m - 1, d); }
-  const dateAfter = n => iso(addDays(new Date(), n));
-  const TODAY = dateAfter(0);
+// 메모나 URL 에 <script> 같은 글자가 있어도 글자로만 보이게 바꾼다 (XSS 방지)
+function esc(s) {
+  return String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
 
-  function koDate(s) {                // "2026-11-13" → "11월 13일"
-    if (!s) return "";
-    const [, m, d] = s.slice(0, 10).split("-");
-    return `${Number(m)}월 ${Number(d)}일`;
-  }
-
-  function hostOf(url) {
-    try { return new URL(url).hostname.replace(/^www\./, ""); } catch (e) { return url; }
-  }
-
-  function showMsg(el, kind, text) {
-    el.className = "msg " + kind;
-    el.textContent = text;
-  }
-
-  // ---------- 상태 ----------
-  let weekStart = mondayOf(new Date());   // 보이는 주의 월요일
-  let selected = TODAY;                    // 선택한 날짜
-  let todayLinks = [];                     // GET /links/today (지난 날짜 미확인 포함)
-  let unchecked = [];                      // GET /links?status=UNCHECKED
-
-  function mondayOf(d) { const x = new Date(d.getFullYear(), d.getMonth(), d.getDate()); return addDays(x, -((x.getDay() + 6) % 7)); }
-
-  // 날짜별 개수: 오늘 칸은 오늘 목록(놓친 링크 포함), 미래 칸은 그날 날짜인 미확인 링크
-  function linksOn(day) {
-    if (day === TODAY) return todayLinks;
-    if (day < TODAY) return [];
-    return unchecked.filter(l => l.dueDate === day);
-  }
-
-  // ---------- 주간 띠 ----------
-  function renderWeek() {
-    const end = addDays(weekStart, 6);
-    const sameMonth = weekStart.getMonth() === end.getMonth();
-    document.getElementById("range").textContent =
-      `${weekStart.getFullYear()}년 ${weekStart.getMonth() + 1}월 ${weekStart.getDate()}일 ~ ${sameMonth ? "" : (end.getMonth() + 1) + "월 "}${end.getDate()}일`;
-
-    const box = document.getElementById("days");
-    box.innerHTML = "";
-    for (let i = 0; i < 7; i++) {
-      const d = addDays(weekStart, i);
-      const day = iso(d);
-      const n = linksOn(day).length;
-      const b = document.createElement("button");
-      b.type = "button";
-      b.className = "day" + (n ? " has" : "") + (day < TODAY ? " past" : "") + (day === TODAY ? " today" : "") + (day === selected ? " sel" : "");
-      b.setAttribute("aria-label", `${d.getMonth() + 1}월 ${d.getDate()}일, 다시 볼 링크 ${n}개`);
-      b.innerHTML = `<span class="dow">${day === TODAY ? "오늘" : DOW[d.getDay()]}</span><span class="num">${d.getDate()}</span><span class="cnt">${n ? n + "개" : ""}</span>`;
-      b.addEventListener("click", () => selectDay(day));
-      box.appendChild(b);
-    }
-  }
-
-  function selectDay(day) {
-    selected = day;
-    if (day > TODAY) setDueTo(day);        // 미래 날짜를 누르면 저장 폼 날짜도 그날로
-    showView("day");
-    renderWeek();
-    renderDay();
-  }
-
-  function moveWeek(n) { weekStart = addDays(weekStart, 7 * n); renderWeek(); }
-  document.getElementById("prevWeek").addEventListener("click", () => moveWeek(-1));
-  document.getElementById("nextWeek").addEventListener("click", () => moveWeek(1));
-  document.getElementById("todayBtn").addEventListener("click", () => { weekStart = mondayOf(new Date()); selectDay(TODAY); });
-
-  function renderDay() {
-    const d = fromIso(selected);
-    const label = `${d.getMonth() + 1}월 ${d.getDate()}일 ${DOW[d.getDay()]}요일`;
-    const links = linksOn(selected);
-    const title = document.getElementById("dayTitle");
-    const list = document.getElementById("dayList");
-    if (selected === TODAY) {
-      title.textContent = `오늘 · 다시 볼 링크 ${links.length}개`;
-      renderList(list, links, "오늘 다시 볼 링크가 없어요. 새 링크를 추가해 보세요.", false);
-    } else if (selected < TODAY) {
-      title.textContent = label;
-      renderList(list, [], "지난 날짜예요. 아직 안 본 링크는 오늘 목록에 모여 있어요.", false);
-    } else {
-      title.textContent = `${label} · 다시 볼 링크 ${links.length}개`;
-      renderList(list, links, "이날 다시 볼 링크가 없어요.", false);
-    }
-  }
-
-  // ---------- 링크 저장 ----------
-  const form = document.getElementById("saveForm");
-  const dueInput = document.getElementById("dueDate");
-  const memoInput = document.getElementById("memo");
-  const saveBtn = document.getElementById("saveBtn");
-  const saveMsg = document.getElementById("saveMsg");
-  const chips = form.querySelectorAll(".chip");
-
-  function setDueTo(day) {
-    dueInput.value = day;
-    chips.forEach(c => c.classList.toggle("on", day === dateAfter(Number(c.dataset.days))));
-  }
-
-  function resetForm() {
-    form.reset();
-    dueInput.min = TODAY;
-    setDueTo(dateAfter(3));                // 기본값: 오늘 + 3일
-    document.getElementById("memoCount").textContent = "0";
-  }
-
-  chips.forEach(c => c.addEventListener("click", () => setDueTo(dateAfter(Number(c.dataset.days)))));
-  dueInput.addEventListener("input", () => setDueTo(dueInput.value));
-  memoInput.addEventListener("input", () => {
-    document.getElementById("memoCount").textContent = memoInput.value.length;
-  });
-
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    saveBtn.disabled = true;
-    saveBtn.textContent = "핵심 정리 중…";
-    showMsg(saveMsg, "info", "링크를 읽고 핵심을 정리하고 있어요. 10초 정도 걸릴 수 있어요.");
-
-    const r = await api("POST", "/links", {
-      url: document.getElementById("url").value,
-      dueDate: dueInput.value,
-      memo: memoInput.value
+// ============================================================
+// 2. 서버 요청: 모든 요청이 이 함수를 거친다. 결과는 { ok, data }
+// ============================================================
+async function api(method, path, body) {
+  try {
+    const res = await fetch(path, {
+      method,
+      headers: body ? { "Content-Type": "application/json" } : {},
+      body: body ? JSON.stringify(body) : undefined
     });
+    const text = await res.text();
+    return { ok: res.ok, data: text ? JSON.parse(text) : null };
+  } catch {
+    return { ok: false, data: { error: "서버에 연결할 수 없습니다." } };
+  }
+}
+const errorOf = (r) => (r.data && r.data.error) || "처리하지 못했어요.";
 
-    saveBtn.disabled = false;
-    saveBtn.textContent = "저장";
-    if (r.ok) {
-      const when = koDate(r.data.dueDate);
-      if (r.data.notice) showMsg(saveMsg, "warn", `${r.data.notice}\n${when}에 다시 보여 드릴게요.`);
-      else showMsg(saveMsg, "ok", `저장했어요. ${when}에 다시 보여 드릴게요.`);
-      resetForm();
-      refresh();
-    } else {
-      showMsg(saveMsg, "err", (r.data && r.data.error) || "저장하지 못했어요.");
-    }
-  });
+// ============================================================
+// 3. 화면 상태
+// ============================================================
+const TODAY = dateAfter(0);
+let weekStart = mondayOf(new Date());   // 보이는 주의 월요일
+let selected = TODAY;                    // 선택한 날짜
+let todayLinks = [];                     // 오늘 볼 링크 (날짜가 지난 미확인 포함)
+let unchecked = [];                      // 미확인 링크 전체 (미래 날짜 개수 계산용)
+let view = "day";                        // "day" = 날짜별, "all" = 보관함
 
-  // ---------- 카드 ----------
-  // "모집 마감: 11월 20일" 같은 줄은 앞부분을 굵게 (Gemini가 붙이는 ** 같은 마크다운 기호는 지운다)
-  function summaryHtml(summary) {
-    if (!summary) return `<p class="summary none">핵심 정리 없음</p>`;
-    const items = summary.split("\n").map(s => s.replace(/\*\*|__/g, "").replace(/^\s*(#+|[-•*·])\s*/, "").trim()).filter(Boolean).map(line => {
+// ============================================================
+// 4. 불러오기: 서버에서 목록을 받아 화면 전체를 다시 그린다
+// ============================================================
+async function refresh() {
+  const [t, u] = await Promise.all([
+    api("GET", "/links/today"),
+    api("GET", "/links?status=UNCHECKED&sort=oldest")
+  ]);
+  todayLinks = t.ok ? t.data : [];
+  unchecked = u.ok ? u.data : [];
+  document.title = todayLinks.length ? `(${todayLinks.length}) 다시봄 Re:See` : "다시봄 Re:See";   // 탭 제목에 오늘 개수
+  renderWeek();
+  renderDay();
+  if (view === "all") loadAll();
+}
+
+// 그날 다시 볼 링크: 오늘 = 오늘 목록, 미래 = 그날 날짜인 미확인, 지난 날 = 없음(오늘 목록에 모여 있음)
+function linksOn(day) {
+  if (day === TODAY) return todayLinks;
+  if (day < TODAY) return [];
+  return unchecked.filter(l => l.dueDate === day);
+}
+
+// ============================================================
+// 5. 주간 달력
+// ============================================================
+function renderWeek() {
+  const end = addDays(weekStart, 6);
+  $("range").textContent = `${weekStart.getFullYear()}년 ${weekStart.getMonth() + 1}월 ${weekStart.getDate()}일 ~ `
+    + (end.getMonth() === weekStart.getMonth() ? "" : `${end.getMonth() + 1}월 `) + `${end.getDate()}일`;
+
+  let html = "";
+  for (let i = 0; i < 7; i++) {
+    const d = addDays(weekStart, i);
+    const day = iso(d);
+    const n = linksOn(day).length;
+    const cls = ["day", n && "has", day < TODAY && "past", day === TODAY && "today", day === selected && "sel"].filter(Boolean).join(" ");
+    html += `<button type="button" class="${cls}" data-day="${day}" aria-label="${koDate(day)}, 다시 볼 링크 ${n}개">
+               <span>${day === TODAY ? "오늘" : DOW[d.getDay()]}</span><b>${d.getDate()}</b><small>${n ? n + "개" : ""}</small>
+             </button>`;
+  }
+  $("days").innerHTML = html;
+}
+
+$("days").addEventListener("click", (e) => {
+  const btn = e.target.closest("[data-day]");
+  if (btn) selectDay(btn.dataset.day);
+});
+
+function selectDay(day) {
+  selected = day;
+  if (day > TODAY) setDue(day);          // 미래 날짜를 누르면 저장 폼 날짜도 그날로
+  showView("day");
+  renderWeek();
+  renderDay();
+}
+
+function moveWeek(n) { weekStart = addDays(weekStart, 7 * n); renderWeek(); }
+$("prevWeek").addEventListener("click", () => moveWeek(-1));
+$("nextWeek").addEventListener("click", () => moveWeek(1));
+$("todayBtn").addEventListener("click", () => { weekStart = mondayOf(new Date()); selectDay(TODAY); });
+
+// 선택한 날짜의 목록
+function renderDay() {
+  const d = new Date(selected + "T00:00");
+  const label = selected === TODAY ? "오늘" : `${d.getMonth() + 1}월 ${d.getDate()}일 ${DOW[d.getDay()]}요일`;
+  const links = linksOn(selected);
+  let empty = "이날 다시 볼 링크가 없어요.";
+  if (selected === TODAY) empty = "오늘 다시 볼 링크가 없어요. 새 링크를 추가해 보세요.";
+  if (selected < TODAY) empty = "지난 날짜예요. 아직 안 본 링크는 오늘 목록에 모여 있어요.";
+
+  $("dayTitle").textContent = selected < TODAY ? label : `${label} · 다시 볼 링크 ${links.length}개`;
+  renderList($("dayList"), links, empty, false);
+}
+
+// ============================================================
+// 6. 링크 카드
+// ============================================================
+let shown = {};   // id → 지금 화면에 있는 링크 (카드 버튼이 어떤 링크인지 찾을 때 사용)
+
+function renderList(listEl, links, emptyText, inArchive) {
+  links.forEach(l => { shown[l.id] = l; });
+  listEl.innerHTML = links.length ? links.map(l => cardHtml(l, inArchive)).join("") : `<div class="empty">${emptyText}</div>`;
+}
+
+function cardHtml(link, inArchive) {
+  const todo = link.status === "UNCHECKED";
+  let badge = "";
+  if (inArchive) badge = todo ? `<span class="badge">${koDate(link.dueDate)}에 다시 보기</span>` : `<span class="badge done">확인 완료</span>`;
+  else if (link.dueDate < TODAY) badge = `<span class="badge">${koDate(link.dueDate)}부터 기다리는 중</span>`;
+
+  return `
+    <article class="card ${todo ? "" : "done"}" data-id="${link.id}">
+      <div class="top">
+        <p class="title">${esc(link.memo || hostOf(link.url))}</p>
+        <span class="meta">${esc(hostOf(link.url))} · ${koDate(link.createdAt)} 저장</span>
+      </div>
+      ${badge}
+      ${summaryHtml(link.summary)}
+      <div class="actions">
+        ${todo ? `<button type="button" class="btn main" data-act="check">확인 완료</button>` : ""}
+        <button type="button" class="btn" data-act="review">다른 날 다시 보기</button>
+        <button type="button" class="btn text" data-act="memo">메모 ${link.memo ? "수정" : "쓰기"}</button>
+        <a href="${esc(link.url)}" target="_blank" rel="noopener noreferrer">링크 열기</a>
+      </div>
+      <div class="slot"></div>
+    </article>`;
+}
+
+// 핵심 정리를 한 줄씩. "모집 마감: 11월 20일" 은 앞부분을 굵게, Gemini 가 붙인 ** 같은 기호는 지운다
+function summaryHtml(summary) {
+  if (!summary) return `<p class="summary none">핵심 정리 없음</p>`;
+  const lines = summary.split("\n")
+    .map(s => s.replace(/\*\*|__/g, "").replace(/^\s*(#+|[-•*·])\s*/, "").trim())
+    .filter(Boolean)
+    .map(line => {
       const i = line.indexOf(":");
-      if (i > 0 && i <= 12) return `<li><b>${esc(line.slice(0, i))}</b>${esc(line.slice(i + 1).trim())}</li>`;
-      return `<li>${esc(line)}</li>`;
+      return (i > 0 && i <= 12)
+        ? `<li><b>${esc(line.slice(0, i))}</b>${esc(line.slice(i + 1).trim())}</li>`
+        : `<li>${esc(line)}</li>`;
     });
-    return `<ul class="summary">${items.join("")}</ul>`;
-  }
+  return `<ul class="summary">${lines.join("")}</ul>`;
+}
 
-  function cardHtml(link, inArchive) {
-    const todo = link.status === "UNCHECKED";
-    const title = link.memo ? esc(link.memo) : esc(hostOf(link.url));
-    let state = "";
-    if (inArchive) state = todo ? `<span class="state todo">${koDate(link.dueDate)}에 다시 보기</span>` : `<span class="state done">확인 완료</span>`;
-    else if (link.dueDate < TODAY) state = `<span class="state todo">${koDate(link.dueDate)}부터 기다리는 중</span>`;
-    return `
-      <article class="card ${todo ? "" : "done"}" data-id="${link.id}">
-        <div class="bar"></div>
-        <div class="main">
-          <div class="top">
-            <p class="title">${title}</p>
-            <span class="meta">${esc(hostOf(link.url))} · ${koDate(link.createdAt)} 저장</span>
-          </div>
-          ${state ? `<div>${state}</div>` : ""}
-          ${summaryHtml(link.summary)}
-          <div class="actions">
-            ${todo ? `<button type="button" class="btn ok" data-act="check">확인 완료</button>` : ""}
-            <button type="button" class="btn" data-act="review">다른 날 다시 보기</button>
-            <button type="button" class="btn text" data-act="memo">메모 ${link.memo ? "수정" : "쓰기"}</button>
-            <a href="${esc(link.url)}" target="_blank" rel="noopener noreferrer">링크 열기</a>
-          </div>
-          <div class="slot"></div>
-        </div>
-      </article>`;
-  }
-
-  function renderList(el, links, emptyText, inArchive) {
-    el.innerHTML = links.length ? links.map(l => cardHtml(l, inArchive)).join("") : `<div class="empty">${emptyText}</div>`;
-    el.querySelectorAll(".card").forEach(card => {
-      const link = links.find(l => String(l.id) === card.dataset.id);
-      card.querySelectorAll("[data-act]").forEach(btn =>
-        btn.addEventListener("click", () => onAction(card, link, btn.dataset.act)));
-    });
-  }
-
-  async function onAction(card, link, act) {
-    const slot = card.querySelector(".slot");
-    if (act === "check") {
-      const r = await api("PATCH", `/links/${link.id}/status`, { action: "CHECK" });
-      return r.ok ? refresh() : showCardError(slot, r);
-    }
-    if (act === "review") {
-      slot.innerHTML = `
-        <div class="inline">
-          <span style="font-size:13px;font-weight:700">언제 다시 볼까요?</span>
-          <div class="row">
-            <button type="button" class="chip" data-d="1">내일</button>
-            <button type="button" class="chip on" data-d="3">3일 후</button>
-            <button type="button" class="chip" data-d="7">7일 후</button>
-            <input type="date" class="newDate" min="${TODAY}" value="${dateAfter(3)}" aria-label="새 날짜">
-          </div>
-          <div class="row">
-            <button type="button" class="btn ok save">저장</button>
-            <button type="button" class="btn text cancel">취소</button>
-          </div>
-        </div>`;
-      const dateEl = slot.querySelector(".newDate");
-      const cs = slot.querySelectorAll("[data-d]");
-      cs.forEach(b => b.addEventListener("click", () => {
-        dateEl.value = dateAfter(Number(b.dataset.d));
-        cs.forEach(x => x.classList.toggle("on", x === b));
-      }));
-      dateEl.addEventListener("input", () => cs.forEach(x => x.classList.remove("on")));
-      slot.querySelector(".cancel").addEventListener("click", () => { slot.innerHTML = ""; });
-      slot.querySelector(".save").addEventListener("click", async () => {
-        const r = await api("PATCH", `/links/${link.id}/status`, { action: "REVIEW", dueDate: dateEl.value });
-        r.ok ? refresh() : showCardError(slot, r, true);
-      });
-      return;
-    }
-    if (act === "memo") {
-      slot.innerHTML = `
-        <div class="inline">
-          <textarea class="memoEdit" maxlength="200" aria-label="메모">${esc(link.memo || "")}</textarea>
-          <div class="row">
-            <button type="button" class="btn ok save">저장</button>
-            <button type="button" class="btn text cancel">취소</button>
-          </div>
-        </div>`;
-      slot.querySelector(".cancel").addEventListener("click", () => { slot.innerHTML = ""; });
-      slot.querySelector(".save").addEventListener("click", async () => {
-        const r = await api("PATCH", `/links/${link.id}/memo`, { memo: slot.querySelector(".memoEdit").value });
-        r.ok ? refresh() : showCardError(slot, r, true);
-      });
-    }
-  }
-
-  function showCardError(slot, r, keep) {
-    const msg = `<div class="card-err">${esc((r.data && r.data.error) || "처리하지 못했어요.")}</div>`;
-    if (keep) {
-      slot.querySelector(".card-err")?.remove();
-      slot.firstElementChild.insertAdjacentHTML("beforeend", msg);
-    } else {
-      slot.innerHTML = msg;
-    }
-  }
-
-  // ---------- 보관함 ----------
-  async function loadAll() {
-    const status = document.getElementById("statusFilter").value;
-    const sort = document.getElementById("sortOrder").value;
-    const r = await api("GET", `/links?status=${status}&sort=${sort}`);
-    renderList(document.getElementById("allList"), r.ok ? r.data : [], "저장한 링크가 없어요.", true);
-  }
-  document.getElementById("statusFilter").addEventListener("change", loadAll);
-  document.getElementById("sortOrder").addEventListener("change", loadAll);
-
-  let view = "day";
-  function showView(v) {
-    view = v;
-    document.getElementById("dayView").hidden = v !== "day";
-    document.getElementById("allView").hidden = v !== "all";
-    const btn = document.getElementById("viewBtn");
-    btn.classList.toggle("on", v === "all");
-    btn.textContent = v === "all" ? "날짜별로 보기" : "보관함 전체 보기";
-  }
-  document.getElementById("viewBtn").addEventListener("click", () => {
-    showView(view === "all" ? "day" : "all");
-    if (view === "all") loadAll();
+// ============================================================
+// 7. 카드 버튼: 확인 완료, 다른 날 다시 보기, 메모 수정 (R4, R1-2)
+// ============================================================
+for (const listEl of [$("dayList"), $("allList")]) {
+  listEl.addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-act]");
+    if (!btn) return;
+    const card = btn.closest(".card");
+    onCardButton(shown[card.dataset.id], btn.dataset.act, card.querySelector(".slot"));
   });
+}
 
-  // ---------- 불러오기 ----------
-  async function refresh() {
-    const [t, u] = await Promise.all([api("GET", "/links/today"), api("GET", "/links?status=UNCHECKED&sort=oldest")]);
-    todayLinks = t.ok ? t.data : [];
-    unchecked = u.ok ? u.data : [];
-    document.title = todayLinks.length ? `(${todayLinks.length}) 다시봄 Re:See` : "다시봄 Re:See";   // 탭 제목에 오늘 개수
-    renderWeek();
-    renderDay();
-    if (view === "all") loadAll();
+async function onCardButton(link, act, slot) {
+  if (act === "check") {
+    const r = await api("PATCH", `/links/${link.id}/status`, { action: "CHECK" });
+    return r.ok ? refresh() : (slot.innerHTML = `<div class="card-err">${esc(errorOf(r))}</div>`);
   }
+  if (act === "review") {
+    openInline(slot, `
+      <span class="label">언제 다시 볼까요?</span>
+      <div class="row">
+        <button type="button" class="chip" data-d="1">내일</button>
+        <button type="button" class="chip on" data-d="3">3일 후</button>
+        <button type="button" class="chip" data-d="7">7일 후</button>
+        <input type="date" class="newDate" min="${TODAY}" value="${dateAfter(3)}" aria-label="새 날짜">
+      </div>`,
+      () => api("PATCH", `/links/${link.id}/status`, { action: "REVIEW", dueDate: slot.querySelector(".newDate").value }));
+    const dateEl = slot.querySelector(".newDate");
+    slot.querySelectorAll("[data-d]").forEach(b => b.addEventListener("click", () => {
+      dateEl.value = dateAfter(+b.dataset.d);
+      slot.querySelectorAll("[data-d]").forEach(x => x.classList.toggle("on", x === b));
+    }));
+    dateEl.addEventListener("input", () => slot.querySelectorAll("[data-d]").forEach(x => x.classList.remove("on")));
+  }
+  if (act === "memo") {
+    openInline(slot, `<textarea class="memoEdit" maxlength="200" aria-label="메모">${esc(link.memo)}</textarea>`,
+      () => api("PATCH", `/links/${link.id}/memo`, { memo: slot.querySelector(".memoEdit").value }));
+  }
+}
 
+// 카드 아래에 작은 입력 칸을 열고, 저장을 누르면 request() 를 보낸다. 실패하면 칸 아래에 오류 문구
+function openInline(slot, innerHtml, request) {
+  slot.innerHTML = `
+    <div class="inline">
+      ${innerHtml}
+      <div class="row">
+        <button type="button" class="btn main save">저장</button>
+        <button type="button" class="btn text cancel">취소</button>
+      </div>
+      <div class="card-err"></div>
+    </div>`;
+  slot.querySelector(".cancel").addEventListener("click", () => { slot.innerHTML = ""; });
+  slot.querySelector(".save").addEventListener("click", async () => {
+    const r = await request();
+    if (r.ok) refresh();
+    else slot.querySelector(".card-err").textContent = errorOf(r);
+  });
+}
+
+// ============================================================
+// 8. 링크 추가: 1단계 핵심 정리 보기 → 2단계 메모·날짜 정하고 저장 (R1, R1-2, R2)
+// ============================================================
+let preview = null;   // 1단계 결과 { url, summary, notice }. 없으면 아직 1단계
+
+const chips = document.querySelectorAll("#saveForm .chip");
+
+// 날짜 칸을 day 로 바꾸고, 같은 날짜인 단축 버튼을 켠다
+function setDue(day) {
+  $("dueDate").value = day;
+  chips.forEach(c => c.classList.toggle("on", day === dateAfter(+c.dataset.days)));
+}
+
+function showMsg(id, kind, text) { $(id).className = "msg " + kind; $(id).textContent = text; }
+
+// 처음 상태(1단계)로 되돌린다
+function resetForm() {
+  $("saveForm").reset();
+  preview = null;
+  $("step2").hidden = true;
+  $("previewBtn").hidden = false;
+  $("previewMsg").className = "msg";
+  $("dueDate").min = TODAY;
+  setDue(dateAfter(3));                  // 기본값: 오늘 + 3일
+  $("memoCount").textContent = "0";
+}
+
+// 1단계: URL 칸에서 엔터를 치거나 "핵심 정리 보기"를 누르면
+$("saveForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  if (preview) return;                   // 이미 2단계면 엔터는 무시 (저장은 버튼으로)
+  $("previewBtn").disabled = true;
+  $("previewBtn").textContent = "정리 중…";
+  showMsg("previewMsg", "info", "링크를 읽고 핵심을 정리하고 있어요. 10초 정도 걸릴 수 있어요.");
+  $("saveMsg").className = "msg";
+
+  const r = await api("POST", "/links/preview", { url: $("url").value });
+
+  $("previewBtn").disabled = false;
+  $("previewBtn").textContent = "핵심 정리 보기";
+  if (!r.ok) return showMsg("previewMsg", "err", errorOf(r));
+
+  preview = r.data;
+  $("url").value = preview.url;          // https:// 를 붙인 주소로 바꿔 보여 준다
+  $("previewBtn").hidden = true;
+  $("step2").hidden = false;
+  if (preview.summary) {
+    $("previewMsg").className = "msg";
+    $("previewBox").innerHTML = summaryHtml(preview.summary);
+  } else {
+    showMsg("previewMsg", "warn", preview.notice);   // 정리 실패 → 메모를 적도록 안내
+    $("previewBox").innerHTML = "";
+    $("memo").focus();
+  }
+});
+
+// URL 을 고치면 정리를 다시 받아야 하므로 1단계로 돌아간다
+$("url").addEventListener("input", () => {
+  if (!preview) return;
+  const url = $("url").value;
   resetForm();
+  $("url").value = url;
+});
+
+// 2단계: 저장
+$("saveBtn").addEventListener("click", async () => {
+  const r = await api("POST", "/links", {
+    url: preview.url, summary: preview.summary, memo: $("memo").value, dueDate: $("dueDate").value
+  });
+  if (!r.ok) return showMsg("saveMsg", "err", errorOf(r));
+  resetForm();
+  showMsg("saveMsg", "ok", `저장했어요. ${koDate(r.data.dueDate)}에 다시 보여 드릴게요.`);
   refresh();
+});
+
+chips.forEach(c => c.addEventListener("click", () => setDue(dateAfter(+c.dataset.days))));
+$("dueDate").addEventListener("input", (e) => setDue(e.target.value));
+$("memo").addEventListener("input", (e) => { $("memoCount").textContent = e.target.value.length; });
+
+// ============================================================
+// 9. 보관함 (R5)
+// ============================================================
+async function loadAll() {
+  const r = await api("GET", `/links?status=${$("statusFilter").value}&sort=${$("sortOrder").value}`);
+  renderList($("allList"), r.ok ? r.data : [], "저장한 링크가 없어요.", true);
+}
+$("statusFilter").addEventListener("change", loadAll);
+$("sortOrder").addEventListener("change", loadAll);
+
+function showView(v) {
+  view = v;
+  $("dayView").hidden = v !== "day";
+  $("allView").hidden = v !== "all";
+  $("viewBtn").classList.toggle("on", v === "all");
+  $("viewBtn").textContent = v === "all" ? "날짜별로 보기" : "보관함 전체 보기";
+}
+$("viewBtn").addEventListener("click", () => {
+  showView(view === "all" ? "day" : "all");
+  if (view === "all") loadAll();
+});
+
+// ============================================================
+// 10. 시작
+// ============================================================
+resetForm();
+refresh();
 </script>
 </body>
 </html>
