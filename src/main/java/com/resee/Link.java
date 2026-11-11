@@ -24,6 +24,9 @@ public class Link {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(length = 20)
+    private String owner;                // 저장한 사람의 아이디. 그 사람에게만 보인다
+
     @Column(nullable = false, length = 2048)
     private String url;
 
@@ -47,7 +50,8 @@ public class Link {
         // JPA가 DB에서 읽어 올 때 쓰는 빈 생성자
     }
 
-    public Link(String url, String summary, String memo, LocalDate dueDate) {
+    public Link(String owner, String url, String summary, String memo, LocalDate dueDate) {
+        this.owner = owner;
         this.url = url;
         this.summary = summary;
         this.memo = memo;

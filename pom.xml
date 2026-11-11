@@ -29,6 +29,11 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
         </dependency>
+        <!-- 비밀번호를 BCrypt 로 바꿔 저장 (Spring Security 중 암호화 부분만) -->
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-crypto</artifactId>
+        </dependency>
         <!-- PostgreSQL 접속 드라이버 -->
         <dependency>
             <groupId>org.postgresql</groupId>

@@ -4,6 +4,15 @@
 
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 $Base = "http://localhost:8080"
+$User = "tester"; $Pass = "test1234"   # 시험용 계정 (없으면 만들고 로그인)
+# 회원가입(이미 있으면 무시) 후 로그인해서 "Authorization: Bearer 토큰" 헤더를 돌려준다
+function Login([string]$name, [string]$pw) {
+    $body = [Text.Encoding]::UTF8.GetBytes((@{ username = $name; password = $pw } | ConvertTo-Json))
+    try { Invoke-WebRequest -UseBasicParsing -Method Post -Uri "$Base/users/signup" -ContentType "application/json; charset=utf-8" -Body $body | Out-Null } catch {}
+    $r = Invoke-WebRequest -UseBasicParsing -Method Post -Uri "$Base/users/login" -ContentType "application/json; charset=utf-8" -Body $body
+    return @{ Authorization = "Bearer " + (ConvertFrom-Json $r.Content).token }
+}
+$Auth = Login $User $Pass
 $results = New-Object System.Collections.ArrayList
 
 $DbUser = "resee"
@@ -29,7 +38,7 @@ function ReadJson($resp) {
 }
 
 function Req([string]$method, [string]$path, $body) {
-    $p = @{ UseBasicParsing = $true; Method = $method; Uri = "$Base$path" }
+    $p = @{ UseBasicParsing = $true; Method = $method; Uri = "$Base$path"; Headers = $Auth }
     if ($null -ne $body) {
         $p.ContentType = "application/json; charset=utf-8"
         $p.Body = [System.Text.Encoding]::UTF8.GetBytes(($body | ConvertTo-Json -Compress))
@@ -50,11 +59,11 @@ function D([int]$offset) { return $today.AddDays($offset).ToString("yyyy-MM-dd")
 # 공통 시작 상태 A~D (id 1~4)
 function ResetAD() {
     Sql "TRUNCATE links RESTART IDENTITY;" | Out-Null
-    Sql ("INSERT INTO links (url, memo, due_date, status, created_at) VALUES " +
-         "('https://example.com/A', 'A', '" + (D -1) + "', 'UNCHECKED', now())," +
-         "('https://example.com/B', 'B', '" + (D 0) + "', 'UNCHECKED', now())," +
-         "('https://example.com/C', 'C', '" + (D 1) + "', 'UNCHECKED', now())," +
-         "('https://example.com/D', 'D', '" + (D 0) + "', 'CHECKED', now());") | Out-Null
+    Sql ("INSERT INTO links (owner, url, memo, due_date, status, created_at) VALUES " +
+         "('tester', 'https://example.com/A', 'A', '" + (D -1) + "', 'UNCHECKED', now())," +
+         "('tester', 'https://example.com/B', 'B', '" + (D 0) + "', 'UNCHECKED', now())," +
+         "('tester', 'https://example.com/C', 'C', '" + (D 1) + "', 'UNCHECKED', now())," +
+         "('tester', 'https://example.com/D', 'D', '" + (D 0) + "', 'CHECKED', now());") | Out-Null
 }
 function TodayMemos() { return ((@((Req GET "/links/today" $null).Body) | ForEach-Object { $_.memo }) -join ",") }
 function Row([int]$id) { return (Sql ("SELECT status || ' ' || due_date FROM links WHERE id=" + $id + ";")) }
@@ -88,13 +97,48 @@ Check "추가" "메모 201자 -> 400 거절" ($r.Code -eq 400) ("응답 " + $r.C
 Write-Host ""
 Write-Host "=== R5. 보관함 ===" -ForegroundColor Cyan
 Sql "TRUNCATE links RESTART IDENTITY;" | Out-Null
-Sql ("INSERT INTO links (url, memo, due_date, status, created_at) VALUES " +
-     "('https://example.com/1', '11/1', '" + (D 5) + "', 'UNCHECKED', '2026-11-01 10:00')," +
-     "('https://example.com/2', '11/2', '" + (D 5) + "', 'CHECKED',   '2026-11-02 10:00')," +
-     "('https://example.com/3', '11/3', '" + (D 5) + "', 'UNCHECKED', '2026-11-03 10:00');") | Out-Null
+Sql ("INSERT INTO links (owner, url, memo, due_date, status, created_at) VALUES " +
+     "('tester', 'https://example.com/1', '11/1', '" + (D 5) + "', 'UNCHECKED', '2026-11-01 10:00')," +
+     "('tester', 'https://example.com/2', '11/2', '" + (D 5) + "', 'CHECKED',   '2026-11-02 10:00')," +
+     "('tester', 'https://example.com/3', '11/3', '" + (D 5) + "', 'UNCHECKED', '2026-11-03 10:00');") | Out-Null
 $all = ((@((Req GET "/links" $null).Body) | ForEach-Object { $_.memo }) -join ",")
 $filtered = ((@((Req GET "/links?status=UNCHECKED&sort=oldest" $null).Body) | ForEach-Object { $_.memo }) -join ",")
 Check "AC5-1" "기본은 최신순 11/3,11/2,11/1, 미확인+오래된 순은 11/1,11/3" (($all -eq "11/3,11/2,11/1") -and ($filtered -eq "11/1,11/3")) ("기본: " + $all + " / 필터: " + $filtered)
+
+Write-Host ""
+Write-Host "=== AC7. 회원가입·로그인, 사람마다 링크 나누기 ===" -ForegroundColor Cyan
+ResetAD
+$r = Req POST "/users/signup" @{ username = "tester"; password = "other1234" }
+Check "AC7-1" "이미 있는 아이디로 가입하면 409 거절" ($r.Code -eq 409) ("응답 {0}" -f $r.Code)
+$r = Req POST "/users/login" @{ username = "tester"; password = "wrong" }
+Check "AC7-1" "비밀번호가 틀리면 401 거절" ($r.Code -eq 401) ("응답 {0}" -f $r.Code)
+
+$Auth = Login "friend" "friend1234"
+$t = @((Req GET "/links/today" $null).Body).Count
+$a = @((Req GET "/links" $null).Body).Count
+Check "AC7-2" "다른 사람(friend)에게는 tester 의 링크가 보이지 않음" (($t -eq 0) -and ($a -eq 0)) ("오늘 {0}건, 보관함 {1}건" -f $t, $a)
+$r = Req PATCH "/links/1/status" @{ action = "CHECK" }
+Check "AC7-2" "friend 가 tester 의 링크(A)를 바꾸려 하면 404, A 는 그대로" (($r.Code -eq 404) -and ((Row 1) -like "UNCHECKED*")) ("응답 {0}, A: {1}" -f $r.Code, (Row 1))
+$r = Req POST "/links" @{ url = "https://example.com/friend"; dueDate = (D 0); memo = "F" }
+$friendToday = TodayMemos
+$Auth = Login $User $Pass
+$testerToday = TodayMemos
+Check "AC7-2" "friend 가 저장한 링크는 friend 에게만 보임" (($r.Code -eq 201) -and ($friendToday -eq "F") -and ($testerToday -eq "A,B")) ("friend: {0} / tester: {1}" -f $friendToday, $testerToday)
+
+# 삭제: friend 는 tester 의 링크를 지울 수 없고, tester 는 자기 링크를 지울 수 있다
+$Auth = Login "friend" "friend1234"
+$r = Req DELETE "/links/2" $null
+Check "AC8-1" "남의 링크(B) 삭제는 404, B 는 그대로" (($r.Code -eq 404) -and ((Sql "SELECT count(*) FROM links WHERE id=2;") -eq "1")) ("응답 {0}" -f $r.Code)
+$Auth = Login $User $Pass
+$r = Req DELETE "/links/2" $null
+$after = TodayMemos
+Check "AC8-1" "내 링크(B) 삭제는 204, 오늘 목록에서 사라짐" (($r.Code -eq 204) -and ($after -eq "A") -and ((Sql "SELECT count(*) FROM links WHERE id=2;") -eq "0")) ("응답 {0}, 오늘: {1}" -f $r.Code, $after)
+
+$saved = $Auth
+$Auth = @{}
+$r = Req GET "/links/today" $null
+Check "AC7-1" "로그인 없이 요청하면 401 거절" ($r.Code -eq 401) ("응답 {0}" -f $r.Code)
+$Auth = $saved
 
 Write-Host ""
 Write-Host "=== 결과 요약 ===" -ForegroundColor Cyan

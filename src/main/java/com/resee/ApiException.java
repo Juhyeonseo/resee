@@ -2,7 +2,7 @@ package com.resee;
 
 import org.springframework.http.HttpStatus;
 
-/** 요청을 거절할 때 쓰는 예외. LinkController 가 {"error": message} 응답으로 바꾼다 */
+/** 요청을 거절할 때 쓰는 예외. ApiExceptionHandler 가 {"error": message} 응답으로 바꾼다 */
 public class ApiException extends RuntimeException {
 
     private final HttpStatus status;

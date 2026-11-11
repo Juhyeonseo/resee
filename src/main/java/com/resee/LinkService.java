@@ -9,7 +9,10 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.List;
 
-/** 링크 기능의 규칙을 모두 여기서 판단한다: 입력 검사, URL 보정, 저장, 상태 변경, 조회 조건 */
+/**
+ * 링크 기능의 규칙을 모두 여기서 판단한다: 입력 검사, URL 보정, 저장, 상태 변경, 조회 조건.
+ * user 는 로그인한 사람의 아이디(UserService.userOf 로 확인된 값)이고, 그 사람의 링크만 다룬다.
+ */
 @Service
 public class LinkService {
 
@@ -38,25 +41,26 @@ public class LinkService {
      * 외부 API 를 부르지 않으므로 바로 끝난다. 핵심 정리가 없어도(null) 저장한다.
      */
     @Transactional
-    public Link create(String url, LocalDate dueDate, String memo, String summary) {
+    public Link create(String user, String url, LocalDate dueDate, String memo, String summary) {
         url = normalizeUrl(url);
         checkDueDate(dueDate);
         memo = normalizeMemo(memo);
         if (summary != null && summary.isBlank()) {
             summary = null;
         }
-        return repository.save(new Link(url, summary, memo, dueDate));
+        return repository.save(new Link(user, url, summary, memo, dueDate));
     }
 
-    /** 오늘의 다시보기 (R3): 미확인이고 다시 볼 날짜가 오늘이거나 지난 링크 */
+    /** 오늘의 다시보기 (R3): 이 아이디의 링크 중 미확인이고 다시 볼 날짜가 오늘이거나 지난 링크 */
     @Transactional(readOnly = true)
-    public List<Link> findToday() {
-        return repository.findByStatusAndDueDateLessThanEqualOrderByDueDateAsc(Link.Status.UNCHECKED, today());
+    public List<Link> findToday(String user) {
+        return repository.findByOwnerAndStatusAndDueDateLessThanEqualOrderByDueDateAsc(
+                user, Link.Status.UNCHECKED, today());
     }
 
-    /** 보관함 (R5): status = ALL | UNCHECKED | CHECKED, sort = newest | oldest */
+    /** 보관함 (R5): 이 아이디의 링크. status = ALL | UNCHECKED | CHECKED, sort = newest | oldest */
     @Transactional(readOnly = true)
-    public List<Link> findAll(String status, String sort) {
+    public List<Link> findAll(String user, String status, String sort) {
         Sort.Direction direction = switch (sort.toLowerCase()) {
             case "newest" -> Sort.Direction.DESC;
             case "oldest" -> Sort.Direction.ASC;
@@ -65,9 +69,9 @@ public class LinkService {
         Sort order = Sort.by(direction, "createdAt", "id");
 
         return switch (status.toUpperCase()) {
-            case "ALL" -> repository.findAll(order);
-            case "UNCHECKED" -> repository.findByStatus(Link.Status.UNCHECKED, order);
-            case "CHECKED" -> repository.findByStatus(Link.Status.CHECKED, order);
+            case "ALL" -> repository.findByOwner(user, order);
+            case "UNCHECKED" -> repository.findByOwnerAndStatus(user, Link.Status.UNCHECKED, order);
+            case "CHECKED" -> repository.findByOwnerAndStatus(user, Link.Status.CHECKED, order);
             default -> throw ApiException.badRequest("상태는 ALL, UNCHECKED, CHECKED 만 가능합니다.");
         };
     }
@@ -77,8 +81,8 @@ public class LinkService {
      * 메서드가 끝날 때 @Transactional 이 바뀐 값을 DB 에 반영한다 (save 를 따로 부르지 않아도 됨).
      */
     @Transactional
-    public Link changeStatus(Long id, String action, LocalDate dueDate) {
-        Link link = repository.findById(id).orElseThrow(() -> ApiException.notFound(id));
+    public Link changeStatus(String user, Long id, String action, LocalDate dueDate) {
+        Link link = findMine(user, id);
         if ("CHECK".equalsIgnoreCase(action)) {
             link.check();
         } else if ("REVIEW".equalsIgnoreCase(action)) {
@@ -92,10 +96,21 @@ public class LinkService {
 
     /** 메모 직접 입력·수정 (R1-2) */
     @Transactional
-    public Link updateMemo(Long id, String memo) {
-        Link link = repository.findById(id).orElseThrow(() -> ApiException.notFound(id));
+    public Link updateMemo(String user, Long id, String memo) {
+        Link link = findMine(user, id);
         link.updateMemo(normalizeMemo(memo));
         return link;
+    }
+
+    /** 링크 삭제: 내 링크만 지울 수 있다 */
+    @Transactional
+    public void delete(String user, Long id) {
+        repository.delete(findMine(user, id));
+    }
+
+    /** 내 링크 하나. 없거나 다른 사람 링크면 404 */
+    private Link findMine(String user, Long id) {
+        return repository.findByIdAndOwner(id, user).orElseThrow(() -> ApiException.notFound(id));
     }
 
     // ---------- 입력 검사 ----------

@@ -24,10 +24,12 @@
   input:focus, textarea:focus, select:focus, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
   .wrap { max-width: 1180px; margin: 0 auto; padding: 32px 24px 60px; display: flex; flex-direction: column; gap: 24px; }
   .box { background: var(--card); border-radius: 24px; padding: 20px 24px; }
+  #app { display: flex; flex-direction: column; gap: 24px; }   /* 주간 달력과 아래 목록·폼 사이 간격 */
 
   /* ===== 버튼 ===== */
   .btn { font-size: 14px; padding: 9px 16px; border-radius: 12px; border: 1px solid var(--line); background: #fff; color: var(--ink); }
   .btn.main { border-color: var(--accent); background: var(--accent); color: #fff; font-weight: 700; }
+  .btn.main.danger { border-color: var(--danger); background: var(--danger); }
   .btn.text { border: none; background: none; color: var(--muted); padding: 9px 6px; }
   .btn:disabled { opacity: .7; cursor: wait; }
   .chip { font-size: 13px; padding: 9px 10px; border-radius: 12px; border: 1px solid var(--line); background: #fff; color: var(--ink); }
@@ -101,9 +103,22 @@
   .msg.warn { display: block; background: var(--warn-soft); color: var(--warn); }
   .msg.err { display: block; background: var(--danger-soft); color: var(--danger); }
 
+  /* ===== 로그인 ===== */
+  .user-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  #who { font-size: 14px; color: var(--muted); }
+  #who b { color: var(--ink); }
+  #loginForm { max-width: 420px; margin: 40px auto; text-align: center; }
+  #loginForm h2 { margin: 0 0 6px; font-size: 20px; font-weight: 800; }
+  #loginForm p { margin: 0 0 16px; font-size: 14px; color: var(--muted); }
+  #loginForm .row { justify-content: center; }
+  #loginForm input { width: 100%; margin-bottom: 8px; }
+  #loginForm .row .btn { flex: 1; }
+  #loginForm .msg { margin-top: 12px; text-align: left; }
+
   /* ===== 휴대폰 화면 ===== */
   @media (max-width: 860px) {
     .wrap { padding: 20px 16px 48px; gap: 18px; }
+    #app { gap: 18px; }
     aside { flex-basis: 100%; order: -1; }
     .days { gap: 4px; }
     .day b { font-size: 18px; }
@@ -120,8 +135,27 @@
       <h1>다시봄</h1>
       <p>저장한 링크, 나중에 다시 보아요</p>
     </div>
-    <button type="button" id="viewBtn" class="btn">보관함 전체 보기</button>
+    <div class="user-bar" id="userBar" hidden>
+      <span id="who"></span>
+      <button type="button" id="logoutBtn" class="btn text">로그아웃</button>
+      <button type="button" id="viewBtn" class="btn">보관함 전체 보기</button>
+    </div>
   </header>
+
+  <!-- 처음 화면: 로그인 / 회원가입 -->
+  <form id="loginForm" class="box" hidden>
+    <h2>로그인</h2>
+    <p>처음이라면 아이디와 비밀번호를 정하고 회원가입을 눌러 주세요</p>
+    <input id="userInput" type="text" maxlength="20" placeholder="아이디 (2~20자)" aria-label="아이디" autocomplete="username">
+    <input id="passInput" type="password" placeholder="비밀번호 (4자 이상)" aria-label="비밀번호" autocomplete="current-password">
+    <div class="row">
+      <button type="submit" class="btn main">로그인</button>
+      <button type="button" id="signupBtn" class="btn">회원가입</button>
+    </div>
+    <div id="loginMsg" class="msg"></div>
+  </form>
+
+  <div id="app" hidden>
 
   <!-- 주간 달력: 화살표로 주 이동, 날짜를 누르면 그날 다시 볼 링크 -->
   <section class="box">
@@ -199,6 +233,7 @@
       </form>
     </aside>
   </div>
+  </div>
 </div>
 
 <script>
@@ -226,14 +261,15 @@ function esc(s) {
 // ============================================================
 // 2. 서버 요청: 모든 요청이 이 함수를 거친다. 결과는 { ok, data }
 // ============================================================
+// 로그인했으면 "Authorization: Bearer 토큰" 헤더를 붙인다. 토큰이 틀리면(401) 로그인 화면으로 돌아간다
 async function api(method, path, body) {
+  const headers = {};
+  if (body) headers["Content-Type"] = "application/json";
+  if (token) headers["Authorization"] = "Bearer " + token;
   try {
-    const res = await fetch(path, {
-      method,
-      headers: body ? { "Content-Type": "application/json" } : {},
-      body: body ? JSON.stringify(body) : undefined
-    });
+    const res = await fetch(path, { method, headers, body: body ? JSON.stringify(body) : undefined });
     const text = await res.text();
+    if (res.status === 401 && token) logout();
     return { ok: res.ok, data: text ? JSON.parse(text) : null };
   } catch {
     return { ok: false, data: { error: "서버에 연결할 수 없습니다." } };
@@ -245,6 +281,7 @@ const errorOf = (r) => (r.data && r.data.error) || "처리하지 못했어요.";
 // 3. 화면 상태
 // ============================================================
 const TODAY = dateAfter(0);
+let token = "";                          // 로그인하면 서버가 주는 토큰 (브라우저에 저장해 새로고침해도 유지)
 let weekStart = mondayOf(new Date());   // 보이는 주의 월요일
 let selected = TODAY;                    // 선택한 날짜
 let todayLinks = [];                     // 오늘 볼 링크 (날짜가 지난 미확인 포함)
@@ -354,6 +391,7 @@ function cardHtml(link, inArchive) {
         ${todo ? `<button type="button" class="btn main" data-act="check">확인 완료</button>` : ""}
         <button type="button" class="btn" data-act="review">다른 날 다시 보기</button>
         <button type="button" class="btn text" data-act="memo">메모 ${link.memo ? "수정" : "쓰기"}</button>
+        <button type="button" class="btn text" data-act="delete">삭제</button>
         <a href="${esc(link.url)}" target="_blank" rel="noopener noreferrer">링크 열기</a>
       </div>
       <div class="slot"></div>
@@ -376,7 +414,7 @@ function summaryHtml(summary) {
 }
 
 // ============================================================
-// 7. 카드 버튼: 확인 완료, 다른 날 다시 보기, 메모 수정 (R4, R1-2)
+// 7. 카드 버튼: 확인 완료, 다른 날 다시 보기, 메모 수정, 삭제 (R4, R1-2, R8)
 // ============================================================
 for (const listEl of [$("dayList"), $("allList")]) {
   listEl.addEventListener("click", (e) => {
@@ -413,15 +451,19 @@ async function onCardButton(link, act, slot) {
     openInline(slot, `<textarea class="memoEdit" maxlength="200" aria-label="메모">${esc(link.memo)}</textarea>`,
       () => api("PATCH", `/links/${link.id}/memo`, { memo: slot.querySelector(".memoEdit").value }));
   }
+  if (act === "delete") {
+    openInline(slot, `<span class="label">이 링크를 삭제할까요? 되돌릴 수 없어요.</span>`,
+      () => api("DELETE", `/links/${link.id}`), "삭제");
+  }
 }
 
-// 카드 아래에 작은 입력 칸을 열고, 저장을 누르면 request() 를 보낸다. 실패하면 칸 아래에 오류 문구
-function openInline(slot, innerHtml, request) {
+// 카드 아래에 작은 입력 칸을 열고, 저장(또는 okText)을 누르면 request() 를 보낸다. 실패하면 칸 아래에 오류 문구
+function openInline(slot, innerHtml, request, okText = "저장") {
   slot.innerHTML = `
     <div class="inline">
       ${innerHtml}
       <div class="row">
-        <button type="button" class="btn main save">저장</button>
+        <button type="button" class="btn main save ${okText === "삭제" ? "danger" : ""}">${okText}</button>
         <button type="button" class="btn text cancel">취소</button>
       </div>
       <div class="card-err"></div>
@@ -538,8 +580,52 @@ $("viewBtn").addEventListener("click", () => {
 // ============================================================
 // 10. 시작
 // ============================================================
-resetForm();
-refresh();
+// 로그인 상태를 브라우저에 저장한다 (새로고침해도 유지). 저장소를 못 쓰는 환경이면 그냥 넘어간다
+function remember(key, value) {
+  try { value ? localStorage.setItem(key, value) : localStorage.removeItem(key); } catch {}
+}
+function recall(key) {
+  try { return localStorage.getItem(key) || ""; } catch { return ""; }
+}
+
+// 로그인된 화면으로
+function enter(username, newToken) {
+  token = newToken;
+  remember("token", newToken);
+  remember("username", username);
+  $("loginForm").hidden = true;
+  $("app").hidden = false;
+  $("userBar").hidden = false;
+  $("who").innerHTML = `<b>${esc(username)}</b> 님의 링크`;
+  $("loginMsg").className = "msg";
+  resetForm();
+  refresh();
+}
+
+// 로그인 화면으로
+function logout() {
+  token = "";
+  remember("token", "");
+  remember("username", "");
+  $("app").hidden = true;
+  $("userBar").hidden = true;
+  $("loginForm").hidden = false;
+  $("passInput").value = "";
+}
+
+// 로그인(엔터 또는 버튼) / 회원가입: 성공하면 둘 다 바로 들어간다
+async function sign(path) {
+  const r = await api("POST", path, { username: $("userInput").value, password: $("passInput").value });
+  if (r.ok) enter(r.data.username, r.data.token);
+  else showMsg("loginMsg", "err", errorOf(r));
+}
+$("loginForm").addEventListener("submit", (e) => { e.preventDefault(); sign("/users/login"); });
+$("signupBtn").addEventListener("click", () => sign("/users/signup"));
+$("logoutBtn").addEventListener("click", logout);
+
+// 저장된 로그인이 있으면 바로 들어가고, 없으면 로그인 화면
+if (recall("token")) enter(recall("username"), recall("token"));
+else logout();
 </script>
 </body>
 </html>

@@ -7,6 +7,15 @@ param([switch]$Restart)
 
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 $Base = "http://localhost:8080"
+$User = "tester"; $Pass = "test1234"   # 시험용 계정 (없으면 만들고 로그인)
+# 회원가입(이미 있으면 무시) 후 로그인해서 "Authorization: Bearer 토큰" 헤더를 돌려준다
+function Login([string]$name, [string]$pw) {
+    $body = [Text.Encoding]::UTF8.GetBytes((@{ username = $name; password = $pw } | ConvertTo-Json))
+    try { Invoke-WebRequest -UseBasicParsing -Method Post -Uri "$Base/users/signup" -ContentType "application/json; charset=utf-8" -Body $body | Out-Null } catch {}
+    $r = Invoke-WebRequest -UseBasicParsing -Method Post -Uri "$Base/users/login" -ContentType "application/json; charset=utf-8" -Body $body
+    return @{ Authorization = "Bearer " + (ConvertFrom-Json $r.Content).token }
+}
+$Auth = Login $User $Pass
 $results = New-Object System.Collections.ArrayList
 
 # .env 에서 DB 사용자 이름 읽기 (없으면 resee)
@@ -39,7 +48,7 @@ function PostLink([hashtable]$body) {
     $json = $body | ConvertTo-Json -Compress
     $bytes = [System.Text.Encoding]::UTF8.GetBytes($json)
     try {
-        $resp = Invoke-WebRequest -UseBasicParsing -Method Post -Uri "$Base/links" -ContentType "application/json; charset=utf-8" -Body $bytes
+        $resp = Invoke-WebRequest -UseBasicParsing -Method Post -Uri "$Base/links" -Headers $Auth -ContentType "application/json; charset=utf-8" -Body $bytes
         return @{ Code = [int]$resp.StatusCode; Body = (ReadJson $resp) }
     } catch {
         $code = 0
@@ -49,7 +58,7 @@ function PostLink([hashtable]$body) {
     }
 }
 
-function GetToday() { return @(ReadJson (Invoke-WebRequest -UseBasicParsing -Uri "$Base/links/today")) }
+function GetToday() { return @(ReadJson (Invoke-WebRequest -UseBasicParsing -Uri "$Base/links/today" -Headers $Auth)) }
 function LinkCount() { return [int](Sql "SELECT COUNT(*) FROM links;") }
 
 $today = (Get-Date).Date
@@ -65,11 +74,11 @@ Write-Host "=== R3. 오늘의 다시보기 ===" -ForegroundColor Cyan
 $list = GetToday
 Check "추가" "날짜가 된 미확인 링크가 없으면 빈 목록" ($list.Count -eq 0) ("결과 " + $list.Count + "건")
 
-Sql ("INSERT INTO links (url, memo, due_date, status, created_at) VALUES " +
-     "('https://example.com/A', 'A', '" + (D -1) + "', 'UNCHECKED', now())," +
-     "('https://example.com/B', 'B', '" + (D 0) + "', 'UNCHECKED', now())," +
-     "('https://example.com/C', 'C', '" + (D 1) + "', 'UNCHECKED', now())," +
-     "('https://example.com/D', 'D', '" + (D 0) + "', 'CHECKED', now());") | Out-Null
+Sql ("INSERT INTO links (owner, url, memo, due_date, status, created_at) VALUES " +
+     "('tester', 'https://example.com/A', 'A', '" + (D -1) + "', 'UNCHECKED', now())," +
+     "('tester', 'https://example.com/B', 'B', '" + (D 0) + "', 'UNCHECKED', now())," +
+     "('tester', 'https://example.com/C', 'C', '" + (D 1) + "', 'UNCHECKED', now())," +
+     "('tester', 'https://example.com/D', 'D', '" + (D 0) + "', 'CHECKED', now());") | Out-Null
 $list = GetToday
 $memos = ($list | ForEach-Object { $_.memo }) -join ","
 Check "AC3-1" "공통 시작 상태(A~D)에서 A, B 순서로만 표시" ($memos -eq "A,B") ("결과: " + $memos)
@@ -80,9 +89,9 @@ Check "AC3-1" "조회 후에도 상태는 그대로" ($checked -eq 1) ("확인 �
 Write-Host ""
 Write-Host "=== R1, R2. 링크 저장 (핵심 정리 제외) ===" -ForegroundColor Cyan
 Sql "TRUNCATE links RESTART IDENTITY;" | Out-Null
-Sql ("INSERT INTO links (url, due_date, status, created_at) VALUES " +
-     "('https://example.com/old1', '" + (D 5) + "', 'UNCHECKED', now())," +
-     "('https://example.com/old2', '" + (D 5) + "', 'UNCHECKED', now());") | Out-Null
+Sql ("INSERT INTO links (owner, url, due_date, status, created_at) VALUES " +
+     "('tester', 'https://example.com/old1', '" + (D 5) + "', 'UNCHECKED', now())," +
+     "('tester', 'https://example.com/old2', '" + (D 5) + "', 'UNCHECKED', now());") | Out-Null
 
 $r = PostLink @{ url = "https://sprint.codeit.kr/track/backend-spring"; dueDate = (D 3); memo = "백엔드 과정 부트캠프" }
 $ok = ($r.Code -eq 201) -and ($r.Body.status -eq "UNCHECKED") -and ($r.Body.dueDate -eq (D 3)) -and ($r.Body.memo -eq "백엔드 과정 부트캠프") -and ((LinkCount) -eq 3)

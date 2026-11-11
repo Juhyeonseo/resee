@@ -4,6 +4,15 @@
 
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 $Base = "http://localhost:8080"
+$User = "tester"; $Pass = "test1234"   # 시험용 계정 (없으면 만들고 로그인)
+# 회원가입(이미 있으면 무시) 후 로그인해서 "Authorization: Bearer 토큰" 헤더를 돌려준다
+function Login([string]$name, [string]$pw) {
+    $body = [Text.Encoding]::UTF8.GetBytes((@{ username = $name; password = $pw } | ConvertTo-Json))
+    try { Invoke-WebRequest -UseBasicParsing -Method Post -Uri "$Base/users/signup" -ContentType "application/json; charset=utf-8" -Body $body | Out-Null } catch {}
+    $r = Invoke-WebRequest -UseBasicParsing -Method Post -Uri "$Base/users/login" -ContentType "application/json; charset=utf-8" -Body $body
+    return @{ Authorization = "Bearer " + (ConvertFrom-Json $r.Content).token }
+}
+$Auth = Login $User $Pass
 $results = New-Object System.Collections.ArrayList
 
 $DbUser = "resee"
@@ -34,7 +43,7 @@ function Post([string]$path, [hashtable]$body) {
     $bytes = [System.Text.Encoding]::UTF8.GetBytes($json)
     $sw = [Diagnostics.Stopwatch]::StartNew()
     try {
-        $resp = Invoke-WebRequest -UseBasicParsing -Method Post -Uri "$Base$path" -ContentType "application/json; charset=utf-8" -Body $bytes -TimeoutSec 90
+        $resp = Invoke-WebRequest -UseBasicParsing -Method Post -Uri "$Base$path" -Headers $Auth -ContentType "application/json; charset=utf-8" -Body $bytes -TimeoutSec 90
         $sw.Stop()
         return @{ Code = [int]$resp.StatusCode; Body = (ReadJson $resp); Sec = $sw.Elapsed.TotalSeconds }
     } catch {
