@@ -12,12 +12,12 @@ import jakarta.persistence.Table;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-/** links 테이블의 한 행 = 저장한 링크 하나. 필드 이름이 그대로 열 이름이 된다 (dueDate → due_date) */
+
 @Entity
 @Table(name = "links")
 public class Link {
 
-    /** 링크 상태는 두 가지뿐: 미확인, 확인 완료 */
+
     public enum Status { UNCHECKED, CHECKED }
 
     @Id
@@ -59,12 +59,12 @@ public class Link {
         this.createdAt = LocalDateTime.now();
     }
 
-    /** '확인 완료' 버튼 */
+
     public void check() {
         this.status = Status.CHECKED;
     }
 
-    /** '다시 보기' 버튼: 미확인으로 두고 날짜만 바꾼다 */
+
     public void reviewAgain(LocalDate newDueDate) {
         this.status = Status.UNCHECKED;
         this.dueDate = newDueDate;

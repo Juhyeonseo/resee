@@ -71,9 +71,9 @@ $ok = ($r.Code -eq 201) -and (-not [string]::IsNullOrWhiteSpace($r.Body.summary)
 Check "AC1-1" "저장: 핵심 정리와 함께 저장, 미확인, 1건 추가, 외부 API 없이 바로 응답" $ok ("응답 {0}, {1:N2}초" -f $r.Code, $r.Sec)
 
 Write-Host ""
-Write-Host "=== AC1-5. 핵심 정리를 할 수 없는 링크 (멋사 공고, 약 12초) ===" -ForegroundColor Cyan
+Write-Host "=== AC1-5. 핵심 정리를 할 수 없는 링크 (약 12초) ===" -ForegroundColor Cyan
 $before = LinkCount
-$p = Post "/links/preview" @{ url = "https://bootcamp.likelion.net/school/kdt-backendj-29th" }
+$p = Post "/links/preview" @{ url = "$p = Post "/links/preview" @{ url = "https://no-such-site.invalid/notice" }" }
 $ok = ($p.Code -eq 200) -and ([string]::IsNullOrWhiteSpace($p.Body.summary)) -and ($p.Body.notice -like "*메모*")
 Check "AC1-5" "미리 보기: 정리 실패 안내, 메모를 적도록 안내" $ok ("응답 {0}, {1:N1}초, 안내: {2}" -f $p.Code, $p.Sec, $p.Body.notice)
 if (-not $ok -and $p.Body.summary) {
